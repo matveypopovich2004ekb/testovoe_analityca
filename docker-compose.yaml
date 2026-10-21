@@ -1,0 +1,31 @@
+services:
+  ch_database:
+    image: clickhouse/clickhouse-server:25.8
+    ports:
+      - "127.0.0.1:8123:8123"
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user=$$CLICKHOUSE_USER --password=$$CLICKHOUSE_PASSWORD --database=$$CLICKHOUSE_DB --query='SELECT 1' > /dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  fastapi_backend:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+    depends_on:
+      ch_database:
+        condition: service_healthy
+
+volumes:
+  clickhouse_data:
