@@ -26,6 +26,10 @@ services:
     depends_on:
       ch_database:
         condition: service_healthy
+        
+    command: >
+      sh -c "python -m app.database.init_database &&
+             exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 volumes:
   clickhouse_data:
